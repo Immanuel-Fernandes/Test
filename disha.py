@@ -1,31 +1,16 @@
 import streamlit as st
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
-import warnings
-from langchain import LLMChain
-from langchain.llms import HuggingFacePipeline
-from langchain.prompts import PromptTemplate
+from transformers import T5ForConditionalGeneration, T5Tokenizer
 
-# Suppress specific warnings
-warnings.filterwarnings("ignore", category=UserWarning, message=".*weights.*")
-
-model_name = "sshleifer/distilbart-cnn-6-6"  # Using a smaller model
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-summarizer = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+# Load the T5-small model and tokenizer
+model_name = "t5-small"
+tokenizer = T5Tokenizer.from_pretrained(model_name)
+model = T5ForConditionalGeneration.from_pretrained(model_name)
 
 def summarize_text(input_text):
-    prompt_template = PromptTemplate(
-        input_variables=["text"],
-        template="Summarize the following text:\n\n{text}\n\nSummary:",
-    )
-    llm = HuggingFacePipeline(pipeline=summarizer)
-    summarization_chain = LLMChain(llm=llm, prompt=prompt_template)
-
-    try:
-        summary = summarization_chain.run({"text": input_text})
-        return summary
-    except Exception as e:
-        return f"An error occurred: {e}"
+    inputs = tokenizer.encode("summarize: " + input_text, return_tensors="pt", max_length=512, truncation=True)
+    summary_ids = model.generate(inputs, max_length=150, min_length=40, length_penalty=2.0, num_beams=4, early_stopping=True)
+    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    return summary
 
 def main():
     st.title("Text Summarization App")
