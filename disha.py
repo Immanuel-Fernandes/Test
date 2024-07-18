@@ -1,15 +1,17 @@
 import streamlit as st
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+import warnings
 from langchain import LLMChain
 from langchain.llms import HuggingFacePipeline
 from langchain.prompts import PromptTemplate
 
+# Suppress specific warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*weights.*")
 
-model_name = "facebook/bart-large-cnn"
+model_name = "sshleifer/distilbart-cnn-6-6"  # Using a smaller model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
-
+summarizer = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
 def summarize_text(input_text):
     prompt_template = PromptTemplate(
@@ -24,7 +26,6 @@ def summarize_text(input_text):
         return summary
     except Exception as e:
         return f"An error occurred: {e}"
-
 
 def main():
     st.title("Text Summarization App")
