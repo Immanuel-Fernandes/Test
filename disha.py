@@ -1,31 +1,13 @@
 import streamlit as st
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
-import warnings
-from langchain import LLMChain
-from langchain.llms import HuggingFacePipeline
-from langchain.prompts import PromptTemplate
-
-# Suppress specific warnings
-warnings.filterwarnings("ignore", category=UserWarning, message=".*weights.*")
-
-model_name = "sshleifer/distilbart-cnn-6-6"  # Using a smaller model
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-summarizer = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
 
 def summarize_text(input_text):
-    prompt_template = PromptTemplate(
-        input_variables=["text"],
-        template="Summarize the following text:\n\n{text}\n\nSummary:",
-    )
-    llm = HuggingFacePipeline(pipeline=summarizer)
-    summarization_chain = LLMChain(llm=llm, prompt=prompt_template)
-
-    try:
-        summary = summarization_chain.run({"text": input_text})
-        return summary
-    except Exception as e:
-        return f"An error occurred: {e}"
+    parser = PlaintextParser.from_string(input_text, Tokenizer("english"))
+    summarizer = LsaSummarizer()
+    summary = summarizer(parser.document, 3)  # Summarize to 3 sentences
+    return " ".join([str(sentence) for sentence in summary])
 
 def main():
     st.title("Text Summarization App")
