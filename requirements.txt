@@ -1,2 +1,11 @@
-streamlit==1.22.0
-transformers==4.9.2
+requests
+streamlit
+google-generativeai
+Pillow
+streamlit
+cohere
+langchain
+langchain-community
+gtts
+pygame
+SpeechRecognition
